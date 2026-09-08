@@ -1,0 +1,20 @@
+{
+  "context": "client",
+  "identifier": "com.pa.quitch.modtranslations-dev",
+  "display_name": "Mod Translations DEV",
+  "description": "Lets mods ship their own translations. A mod that registers with this framework has its text shown in your language, and a mod's translation replaces the game's own where both exist so the community can correct shipped translations.",
+  "author": "Quitch",
+  "version": "1.0.0",
+  "build": "124674",
+  "date": "2026-09-08",
+  "signature": " ",
+  "forum": "https://github.com/Quitch/Mod-Translations/discussions",
+  "category": ["titans", "ui"],
+  "icon": "https://raw.githubusercontent.com/Quitch/Mod-Translations/main/images/icon.png",
+  "priority": 50,
+  "scenes": {
+    "global_mod_list": [
+      "coui://ui/mods/com.pa.quitch.modtranslations/translations.js"
+    ]
+  }
+}
