@@ -14,7 +14,8 @@ cannot be corrected from outside.
 ## Mechanism
 
 `translations.js` runs from `global_mod_list`, and a consumer calls
-`window.ModTranslations.register("<id>")` once per scene. The call:
+`window.ModTranslations.register("<id>")` once per page, from a `global_mod_list`
+script of its own. The call:
 
 1. Reads `i18n.lng()` and builds the fallback chain the same way i18next does:
    `"de-AT"` gives `["de-AT", "de"]`, `"fr"` gives `["fr"]`.
@@ -36,12 +37,25 @@ therefore sees an initialised i18next and runs before every consumer. Mutating `
 at that point does nothing: i18next copied it during `locInit`, which is why the bundle
 goes through i18next's own API.
 
+The consumer's registration has to come from `global_mod_list` as well. Two stock
+readers of the store run before any scene-list script: `locUpdateDocument()` translates
+the static HTML, `<loc>` tags and knockout templates at `document.ready`, and the stock
+scene's model constructor calls `loc()` eagerly and caches the result in plain
+`ko.computed`s and one-time assignments (`gw_play.js` does this for every star's
+description). Text translated there keeps whatever the store held at the time, so a
+consumer that registered from a scene list saw its own HTML and scripts translated, while
+a stock string it corrected, or a stock template showing one of its keys, stayed on the
+game's text or in English for the life of the page. Observed 2026-09-09 on `gw_play` in
+zh-CN: the consumer's bundle landed about 430 ms after the star descriptions were built.
+A registration from `global_mod_list` precedes both readers.
+
 Community Mods sorts mods by `priority` ascending (default 100) and injects
 `ui_mod_list.js` into every panel, so this script runs once per page in every scene and
 sub-panel. A `global_mod_list` script is never also in a scene list, and the server-mod
 merge is a union, so nothing loads it twice on one page; no double-load guard exists and
 none is needed. `modinfo.json` sets `priority` 50 so it runs before any consumer that keeps
-the default.
+the default. Consumers register from the same list, in the same ascending order, so the
+"last registration wins" rule across mods follows `priority` directly.
 
 ### Why synchronous
 
@@ -85,9 +99,16 @@ the same English text, so either is acceptable.
 ## Cost
 
 The framework script is about 4 KB and runs in every panel. A registration is one or two
-synchronous reads of the consumer's files (tens of KB for a large mod) in each scene the
-consumer registers in; English locales read nothing. If a consumer's scene timing shows
-the reads, reduce the scenes it registers in rather than change the framework.
+synchronous reads of the consumer's files (tens of KB for a large mod) on every panel,
+including the uberbar and the live-game sub-panels; English locales read nothing. The two
+icon-atlas panels boot with `i18n.lng()` equal to `en` whatever the setting (observed
+2026-09-09), so they fetch the consumer's script and read no file. Measured 2026-09-09 with
+a 27 KB zh-CN file on the game panel: the script fetch is about 15 ms and the file read
+about 15 ms, both inside the global `loadMods` window, which grew from about 30 ms to about
+75 ms; the same work left the scene list, so the page's total did not change. A consumer cannot reduce that by registering in fewer scenes, since a scene-list
+registration is too late (see "Boot order"). If the reads show in a page's timing, the
+lever is the file: keep it to the keys the stock code needs early and ship the rest
+another way, which is a consumer decision, not a framework change.
 
 ## Failure table
 
@@ -122,10 +143,14 @@ consumer mod enabled from `client_mods`:
 
 1. Settings → Language → a non-English locale (or `localStorage.locale = '"de"'` over
    CDP). The consumer's text is translated **and** the game's own labels on the same
-   screen are still translated. The log shows one `[ModTranslations]` line per consumer
-   scene with the expected `added`; no `LOCEXCEPTION!`, no console errors.
+   screen are still translated. The log shows one `[ModTranslations]` line per page
+   (every panel, not only the consumer's scenes), ahead of the scene's own scripts, with
+   the expected `added`; no `LOCEXCEPTION!`, no console errors.
 2. Add one entry to the consumer's file for a key PA already ships and confirm the mod's
-   text shows and `replaced` counts 1; remove it afterwards.
+   text shows and `replaced` counts 1; remove it afterwards. Pick a key the stock scene
+   translates before any scene script runs (a `<loc>` tag in the stock HTML, or a value
+   the stock model caches at construction), since that is the case a scene-list
+   registration cannot reach.
 3. A regional locale (`de-AT`): `ModTranslations.languages()` returns the chain and
    the registration's `languages` lists only the files that exist (`["de"]`).
 4. English: `languages: []`, no request, text identical to before.

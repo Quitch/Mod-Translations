@@ -35,7 +35,7 @@ Translations does nothing on its own.
    translators. It is never loaded: English keys are the source text, so English wording
    changes in your code, not in a file.
 
-2. Register once per scene, at the top of each scene's first script:
+2. Ship one small script that registers your mod:
 
    ```js
    if (window.ModTranslations) {
@@ -43,10 +43,24 @@ Translations does nothing on its own.
    }
    ```
 
+   List it under `scenes.global_mod_list` in your `modinfo.json`, and in no scene list:
+
+   ```json
+   "scenes": {
+     "global_mod_list": ["coui://ui/mods/<your mod id>/translations.js"]
+   }
+   ```
+
+   A `global_mod_list` script runs on every page before the game's own scene code. That
+   is the only place early enough: the game translates its static HTML and builds its
+   scene model, caching some `loc()` results, before any scene-list script runs, so a
+   registration from a scene list leaves whatever the game translated first in English,
+   including any of the game's own strings your file corrects.
+
    `register` reads the file for the player's locale and then its base language (`de-AT`,
    then `de`), merges them into the game's translation store, and returns
-   `{ id, language, languages, added, replaced, invalid, ok }`. A second call in the same
-   scene returns the cached result. Pass `{ root: "coui://..." }` as a second argument if
+   `{ id, language, languages, added, replaced, invalid, ok }`. A second call on the same
+   page returns the cached result. Pass `{ root: "coui://..." }` as a second argument if
    your files live elsewhere. The guard keeps your mod working when Mod Translations is not
    installed; your text is then English.
 
@@ -58,15 +72,15 @@ Translations does nothing on its own.
 4. Add Mod Translations to your `modinfo.json` `dependencies` so Community Mods installs
    it with your mod, and give your mod a `priority` above 50. Community Mods loads mods in
    ascending `priority` order (the default is 100) and Mod Translations uses 50, so a
-   lower or equal value can run your scene script before `window.ModTranslations` exists
+   lower or equal value can run your global script before `window.ModTranslations` exists
    and your text stays in English.
 
 ### When two mods translate the same key
 
 The last mod to register a key wins. Each `register` call writes its entries over whatever
 is already in the game's translation store, so a key that two mods both ship ends up with
-the text of the mod that registered later. The register order in a scene is the order
-Community Mods runs the scene scripts, which is ascending `priority`: a mod with a higher
+the text of the mod that registered later. The register order is the `global_mod_list`
+order, which is how Community Mods sorts mods: ascending `priority`. A mod with a higher
 `priority` number registers later and takes the key. The result's `replaced` count includes
 keys taken from other mods as well as from the game's tables.
 
@@ -74,8 +88,6 @@ To make sure your text is the one shown:
 
 - Give your mod a higher `priority` than the mod you need to beat. Two mods on the same
   number are ordered by Community Mods, not by you, so pick a distinct value.
-- Register in every scene where the key is shown. A mod that registers only in
-  `live_game` cannot override a key in `new_game`, whatever its priority.
 - Only ship keys you mean to override. A shared key is usually a shared English string such
   as a unit name; if both mods translate it the same way the order does not matter, and if
   they differ the higher-priority mod's reading wins everywhere the key appears, including
