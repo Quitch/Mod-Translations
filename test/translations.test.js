@@ -60,40 +60,25 @@ describe("register", () => {
     assert.equal(result.ok, true);
   });
 
-  it("reads from options.root when given", () => {
-    const fixture = page({
-      lng: "fr",
-      routes: {
-        "coui://ui/mods/elsewhere/fr.json": json(entries({ Mods: "Mods" })),
-      },
-    });
+  it("reads from options.root, adding the trailing slash it is missing", () => {
+    for (const root of [
+      "coui://ui/mods/elsewhere/",
+      "coui://ui/mods/elsewhere",
+    ]) {
+      const fixture = page({
+        lng: "fr",
+        routes: {
+          "coui://ui/mods/elsewhere/fr.json": json(entries({ Mods: "Mods" })),
+        },
+      });
 
-    const result = fixture.api.register(ID, {
-      root: "coui://ui/mods/elsewhere/",
-    });
+      const result = fixture.api.register(ID, { root: root });
 
-    assert.deepEqual(fixture.requests, [
-      { url: "coui://ui/mods/elsewhere/fr.json", async: false },
-    ]);
-    assert.equal(result.added, 1);
-  });
-
-  it("adds the missing trailing slash to options.root", () => {
-    const fixture = page({
-      lng: "fr",
-      routes: {
-        "coui://ui/mods/elsewhere/loc/fr.json": json(entries({ Mods: "Mods" })),
-      },
-    });
-
-    const result = fixture.api.register(ID, {
-      root: "coui://ui/mods/elsewhere/loc",
-    });
-
-    assert.deepEqual(fixture.requests, [
-      { url: "coui://ui/mods/elsewhere/loc/fr.json", async: false },
-    ]);
-    assert.equal(result.added, 1);
+      assert.deepEqual(fixture.requests, [
+        { url: "coui://ui/mods/elsewhere/fr.json", async: false },
+      ]);
+      assert.equal(result.added, 1);
+    }
   });
 
   it("adds every valid key as a flat string in the current locale, replacing the game's own", () => {
