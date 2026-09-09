@@ -40,6 +40,9 @@
   }
 
   function fileUrl(rootUrl, lang) {
+    if (!_.endsWith(rootUrl, "/")) {
+      rootUrl += "/";
+    }
     return rootUrl + lang + ".json";
   }
 

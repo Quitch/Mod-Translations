@@ -78,6 +78,24 @@ describe("register", () => {
     assert.equal(result.added, 1);
   });
 
+  it("adds the missing trailing slash to options.root", () => {
+    const fixture = page({
+      lng: "fr",
+      routes: {
+        "coui://ui/mods/elsewhere/loc/fr.json": json(entries({ Mods: "Mods" })),
+      },
+    });
+
+    const result = fixture.api.register(ID, {
+      root: "coui://ui/mods/elsewhere/loc",
+    });
+
+    assert.deepEqual(fixture.requests, [
+      { url: "coui://ui/mods/elsewhere/loc/fr.json", async: false },
+    ]);
+    assert.equal(result.added, 1);
+  });
+
   it("adds every valid key as a flat string in the current locale, replacing the game's own", () => {
     const fixture = page({
       lng: "de",
