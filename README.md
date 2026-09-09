@@ -90,4 +90,4 @@ See [docs/design.md](docs/design.md) for the mechanism and what it cannot do.
 
 ## Licence
 
-[CC BY 4.0](LICENSE)
+[MIT](LICENSE)
