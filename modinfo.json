@@ -1,7 +1,7 @@
 {
   "context": "client",
-  "identifier": "com.pa.quitch.modtranslations-dev",
-  "display_name": "Mod Translations DEV",
+  "identifier": "com.pa.quitch.modtranslations",
+  "display_name": "Mod Translations",
   "description": "Allows mods to ship their own translations and override the game's default text.",
   "author": "Quitch",
   "version": "1.0.0",
@@ -10,7 +10,7 @@
   "signature": " ",
   "forum": "https://github.com/Quitch/Mod-Translations/discussions",
   "category": ["titans", "ui"],
-  "icon": "https://raw.githubusercontent.com/Quitch/Mod-Translations/develop/images/icon.png",
+  "icon": "https://raw.githubusercontent.com/Quitch/Mod-Translations/main/images/icon.png",
   "priority": 50,
   "scenes": {
     "global_mod_list": [
