@@ -2,7 +2,7 @@
   "context": "client",
   "identifier": "com.pa.quitch.modtranslations-dev",
   "display_name": "Mod Translations DEV",
-  "description": "Allows client mods to ship their own translations and override the game's default text.",
+  "description": "Allows mods to ship their own translations and override the game's default text.",
   "author": "Quitch",
   "version": "1.0.0",
   "build": "124674",
