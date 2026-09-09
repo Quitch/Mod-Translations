@@ -57,6 +57,7 @@
       }
       text = xhr.responseText;
     } catch (e) {
+      // A thrown send is a missing-file answer. See design.md.
       return { missing: true };
     }
     if (!_.isString(text) || !_.trim(text)) {
