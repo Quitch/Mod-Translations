@@ -10,7 +10,7 @@
   "signature": " ",
   "forum": "https://github.com/Quitch/Mod-Translations/discussions",
   "category": ["titans", "ui"],
-  "icon": "https://raw.githubusercontent.com/Quitch/Mod-Translations/main/images/icon.png",
+  "icon": "https://raw.githubusercontent.com/Quitch/Mod-Translations/develop/images/icon.png",
   "priority": 50,
   "scenes": {
     "global_mod_list": [
