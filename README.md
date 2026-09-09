@@ -55,8 +55,8 @@ Translations does nothing on its own.
    the base-language file; a key your file shares with the game's tables, or with another
    mod registered earlier, takes your text. English locales load nothing.
 
-4. Once Mod Translations is on the community mod index, list it in your `modinfo.json`
-   `dependencies` so Community Mods installs it with your mod.
+4. Add Mod Translations your `modinfo.json` `dependencies` so Community Mods installs it
+   with your mod.
 
 See [docs/design.md](docs/design.md) for the mechanism and what it cannot do.
 
