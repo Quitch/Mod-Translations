@@ -126,12 +126,12 @@ consumer mod enabled from `client_mods`:
    scene with the expected `added`; no `LOCEXCEPTION!`, no console errors.
 2. Add one entry to the consumer's file for a key PA already ships and confirm the mod's
    text shows and `replaced` counts 1; remove it afterwards.
-3. A regional locale (`de-AT`): the log shows both files requested and `languages`
-   listing the ones that exist.
+3. A regional locale (`de-AT`): `ModTranslations.languages()` returns the chain and
+   the registration's `languages` lists only the files that exist (`["de"]`).
 4. English: `languages: []`, no request, text identical to before.
 5. Mod Translations disabled: the consumer works with English text and no error.
 6. Grep the PA log directory for `LOCEXCEPTION` and `ModTranslations`.
 
-Which of the three missing-file shapes `coui://` actually produces (throw, 404, or
-status 0 with an empty body) is not yet recorded; all three are handled. Note it here once
-observed.
+A missing file on `coui://` comes back as HTTP 404 with a one-byte body (observed
+2026-09-09 requesting `de-AT.json`; a present file returns 200). The other two shapes
+stay handled in case another engine build differs.
