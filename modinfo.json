@@ -9,7 +9,7 @@
   "date": "2026-09-09",
   "signature": " ",
   "forum": "https://github.com/Quitch/Mod-Translations/discussions",
-  "category": ["titans", "ui"],
+  "category": ["titans", "classic", "ui"],
   "icon": "https://raw.githubusercontent.com/Quitch/Mod-Translations/develop/images/icon.png",
   "priority": 50,
   "scenes": {
