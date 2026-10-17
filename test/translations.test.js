@@ -276,6 +276,66 @@ describe("register", () => {
     assert.deepEqual(fixture.requests, []);
   });
 
+  it("refuses a root with another scheme, without caching or requesting", () => {
+    for (const root of [
+      "http://example.com/translations/",
+      "https://example.com/translations/",
+      " HTTP://example.com/translations/",
+      "file:///C:/translations/",
+      "C:/translations/",
+      "javascript:void 0",
+      "ht\ttp://example.com/translations/",
+      "h\nttps://example.com/translations/",
+      "\x01http://example.com/translations/",
+    ]) {
+      const fixture = page({ lng: "fr" });
+
+      const result = fixture.api.register(ID, { root: root });
+
+      assert.deepEqual(result, { ok: false });
+      assert.equal(fixture.console.error.length, 1);
+      assert.match(fixture.console.error[0], /coui:\/\//);
+      assert.ok(fixture.console.error[0].includes(ID));
+      assert.deepEqual(fixture.api.registered(), {});
+      assert.deepEqual(fixture.requests, []);
+    }
+  });
+
+  it("registers the same id with a valid root after refusing a bad one", () => {
+    const fixture = page({
+      lng: "fr",
+      routes: { [ROOT + "fr.json"]: json(entries({ Mods: "Mods" })) },
+    });
+
+    fixture.api.register(ID, { root: "http://example.com/" });
+    const result = fixture.api.register(ID, { root: ROOT });
+
+    assert.equal(result.ok, true);
+    assert.equal(result.added, 1);
+  });
+
+  it("accepts a coui:// root in any letter case, a path, and surrounding spaces", () => {
+    const cases = [
+      ["COUI://ui/mods/elsewhere", "COUI://ui/mods/elsewhere/fr.json"],
+      [" coui://ui/mods/elsewhere/ ", "coui://ui/mods/elsewhere/fr.json"],
+      ["/ui/mods/elsewhere/", "/ui/mods/elsewhere/fr.json"],
+      ["//ui/mods/elsewhere/", "//ui/mods/elsewhere/fr.json"],
+      ["ui/mods/elsewhere", "ui/mods/elsewhere/fr.json"],
+    ];
+    for (const [root, url] of cases) {
+      const fixture = page({
+        lng: "fr",
+        routes: { [url]: json(entries({ Mods: "Mods" })) },
+      });
+
+      const result = fixture.api.register(ID, { root: root });
+
+      assert.deepEqual(fixture.requests, [{ url: url, async: false }]);
+      assert.equal(result.ok, true);
+      assert.equal(result.added, 1);
+    }
+  });
+
   it("refuses when i18n is absent or incomplete, without caching or throwing", () => {
     const shapes = [
       { i18n: ABSENT },
