@@ -4,6 +4,10 @@
 (function (root) {
   var NAMESPACE = "translation";
   var SEPARATORS = /;;|::/;
+  var FOREIGN_SCHEME = /^(?!coui:)[a-z][a-z0-9+.-]*:/i;
+  // The URL parser drops tabs and newlines anywhere and control characters at
+  // the ends, so "ht\ttp://" requests http://.
+  var URL_IGNORED = /[^\x21-\uffff]/g;
   var registered = {};
 
   function engine() {
@@ -40,6 +44,9 @@
   }
 
   function fileUrl(rootUrl, lang) {
+    if (!_.endsWith(rootUrl, "/")) {
+      rootUrl += "/";
+    }
     return rootUrl + lang + ".json";
   }
 
@@ -105,15 +112,23 @@
       if (_.has(registered, id)) {
         return registered[id];
       }
+      var customRoot =
+        options && _.isString(options.root) && _.trim(options.root);
+      if (
+        customRoot &&
+        FOREIGN_SCHEME.test(customRoot.replace(URL_IGNORED, ""))
+      ) {
+        return fail(
+          "root must be a coui:// URL or a path; " + id + " not registered"
+        );
+      }
       var i18n = engine();
       if (!i18n) {
         return fail("i18n is not initialised; " + id + " not registered");
       }
       var language = i18n.lng();
       var languages = chain(language);
-      var rootUrl =
-        (options && _.isString(options.root) && options.root) ||
-        "coui://ui/mods/" + id + "/translations/";
+      var rootUrl = customRoot || "coui://ui/mods/" + id + "/translations/";
       var additions = {};
       var result = {
         id: id,
