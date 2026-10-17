@@ -74,7 +74,8 @@ a synchronous XHR on `coui://` for the game's own mod scripts, and treats
 The files live at `ui/mods/<id>/translations/<lang>.json`, inside the consumer's own
 namespace. So the id in the path is the string passed to `register()`, and mods share
 nothing. `register(id, { root })` accepts another `coui://` prefix for a mod that keeps
-its files elsewhere.
+its files elsewhere. It refuses any other scheme. The read is synchronous and the engine
+sets no response timeout, so a remote server that never replies would hang the page.
 
 The shape is PA's own, `{ "English key": { "message": "…" } }`, so a consumer can give a
 file to the game's maintainers unchanged. The loader ignores extra properties such as
@@ -122,6 +123,7 @@ the rest another way. That is a consumer decision, not a framework change.
 | -------------------------------------------------------------- | --------------------------------------------------------------------- |
 | Bad `id` (not a non-empty string)                              | `console.error`, `{ ok: false }`, nothing cached                      |
 | `i18n` absent or missing `lng`/`exists`/`addResourceBundle`    | `console.error` naming the id, `{ ok: false }`, nothing cached        |
+| `root` a non-empty string not starting `coui://`               | `console.error` naming the id, `{ ok: false }`, nothing requested     |
 | `i18n.lng()` not a string                                      | `ok: true`, nothing requested                                         |
 | English locale (`en`, `en-US`)                                 | `ok: true`, nothing requested, `languages: []`                        |
 | File missing (404, status 0 with empty body, or thrown `send`) | Skipped silently                                                      |

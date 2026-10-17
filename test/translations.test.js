@@ -276,6 +276,42 @@ describe("register", () => {
     assert.deepEqual(fixture.requests, []);
   });
 
+  it("refuses a root that is not coui://, without caching or requesting", () => {
+    for (const root of [
+      "http://example.com/translations/",
+      "https://example.com/translations/",
+      "file:///C:/translations/",
+      "ui/mods/elsewhere/",
+    ]) {
+      const fixture = page({ lng: "fr" });
+
+      const result = fixture.api.register(ID, { root: root });
+
+      assert.deepEqual(result, { ok: false });
+      assert.equal(fixture.console.error.length, 1);
+      assert.match(fixture.console.error[0], /coui:\/\//);
+      assert.match(fixture.console.error[0], new RegExp(ID));
+      assert.deepEqual(fixture.api.registered(), {});
+      assert.deepEqual(fixture.requests, []);
+    }
+  });
+
+  it("accepts a coui:// root in any letter case", () => {
+    const fixture = page({
+      lng: "fr",
+      routes: {
+        "COUI://ui/mods/elsewhere/fr.json": json(entries({ Mods: "Mods" })),
+      },
+    });
+
+    const result = fixture.api.register(ID, {
+      root: "COUI://ui/mods/elsewhere",
+    });
+
+    assert.equal(result.ok, true);
+    assert.equal(result.added, 1);
+  });
+
   it("refuses when i18n is absent or incomplete, without caching or throwing", () => {
     const shapes = [
       { i18n: ABSENT },

@@ -108,15 +108,17 @@
       if (_.has(registered, id)) {
         return registered[id];
       }
+      var customRoot = options && _.isString(options.root) && options.root;
+      if (customRoot && !_.startsWith(customRoot.toLowerCase(), "coui://")) {
+        return fail("root must be a coui:// URL; " + id + " not registered");
+      }
       var i18n = engine();
       if (!i18n) {
         return fail("i18n is not initialised; " + id + " not registered");
       }
       var language = i18n.lng();
       var languages = chain(language);
-      var rootUrl =
-        (options && _.isString(options.root) && options.root) ||
-        "coui://ui/mods/" + id + "/translations/";
+      var rootUrl = customRoot || "coui://ui/mods/" + id + "/translations/";
       var additions = {};
       var result = {
         id: id,
