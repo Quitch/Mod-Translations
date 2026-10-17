@@ -4,6 +4,7 @@
 (function (root) {
   var NAMESPACE = "translation";
   var SEPARATORS = /;;|::/;
+  var FOREIGN_SCHEME = /^(?!coui:)[a-z][a-z0-9+.-]*:/i;
   var registered = {};
 
   function engine() {
@@ -108,9 +109,12 @@
       if (_.has(registered, id)) {
         return registered[id];
       }
-      var customRoot = options && _.isString(options.root) && options.root;
-      if (customRoot && !_.startsWith(customRoot.toLowerCase(), "coui://")) {
-        return fail("root must be a coui:// URL; " + id + " not registered");
+      var customRoot =
+        options && _.isString(options.root) && _.trim(options.root);
+      if (customRoot && FOREIGN_SCHEME.test(customRoot)) {
+        return fail(
+          "root must be a coui:// URL or a path; " + id + " not registered"
+        );
       }
       var i18n = engine();
       if (!i18n) {

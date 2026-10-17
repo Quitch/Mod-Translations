@@ -61,8 +61,9 @@ Mod Translations does nothing on its own.
    language (`de-AT`, then `de`). It merges them into the game's translation store and
    returns `{ id, language, languages, added, replaced, invalid, ok }`. A second call on
    the same page returns the cached result. Pass `{ root: "coui://..." }` as a second
-   argument if your files live elsewhere. Any other scheme is refused. The guard keeps your mod working when Mod
-   Translations is not installed. Your text is then English.
+   argument if your files live elsewhere. A root with any other scheme is refused. The
+   guard keeps your mod working when Mod Translations is not installed. Your text is then
+   English.
 
 3. The loader applies these rules:
 
