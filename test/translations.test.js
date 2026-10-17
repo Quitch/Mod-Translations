@@ -284,6 +284,9 @@ describe("register", () => {
       "file:///C:/translations/",
       "C:/translations/",
       "javascript:void 0",
+      "ht\ttp://example.com/translations/",
+      "h\nttps://example.com/translations/",
+      "\x01http://example.com/translations/",
     ]) {
       const fixture = page({ lng: "fr" });
 
