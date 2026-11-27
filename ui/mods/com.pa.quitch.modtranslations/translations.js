@@ -96,6 +96,14 @@
     return true;
   }
 
+  function isName(value) {
+    return _.isString(value) && value !== "";
+  }
+
+  function lowerCase(value) {
+    return value.toLowerCase();
+  }
+
   function fail(message) {
     console.error("[ModTranslations] " + message);
     return { ok: false };
@@ -115,6 +123,17 @@
         if (!COUI_ROOT.test(customRoot)) {
           return fail("root must be a coui:// URL; " + id + " not registered");
         }
+      }
+      var shipped = options ? options.languages : undefined;
+      if (shipped !== undefined && shipped !== null) {
+        if (!_.isArray(shipped) || !_.every(shipped, isName)) {
+          return fail(
+            "languages must be an array of non-empty strings; " +
+              id +
+              " not registered"
+          );
+        }
+        shipped = _.map(shipped, lowerCase);
       }
       var i18n = engine();
       if (!i18n) {
@@ -136,6 +155,9 @@
 
       if (!isEnglish(languages)) {
         _.forEach(languages, function (lang) {
+          if (shipped && !_.includes(shipped, lang.toLowerCase())) {
+            return;
+          }
           var url = fileUrl(rootUrl, lang);
           var file = fetchJson(url);
           if (file.missing) {
