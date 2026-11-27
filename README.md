@@ -75,10 +75,12 @@ Mod Translations does nothing on its own.
 
    `register` then requests only the files in the list. Without it, `register` requests
    the locale file and the base-language file whether or not you ship them. On the
-   game's default UI (CEF), each missing file logs an error line, on every page. Names
-   match in any letter case. Keep the list up to date: a language that is not in the
-   list does not load, and nothing reports it. Older versions of Mod Translations ignore
-   the option.
+   game's default UI (CEF), each missing file logs an error line, on every page. A name
+   in the list matches in any letter case, but the request uses the game's spelling, so
+   name the files themselves as in step 1 (`zh-CN.json`). A name that is not a language
+   name, such as `"de.json"`, is refused. Keep the list up to date: a language that is not
+   in the list does not load, and nothing reports it. Older versions of Mod Translations
+   ignore the option.
 
 3. The loader applies these rules:
 

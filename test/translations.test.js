@@ -149,7 +149,7 @@ describe("register", () => {
     }
   });
 
-  it("refuses a languages option that is not an array of non-empty strings", () => {
+  it("refuses a languages option that is not an array of language names", () => {
     for (const languages of [
       "de",
       42,
@@ -157,6 +157,13 @@ describe("register", () => {
       {},
       { 0: "de", length: 1 },
       [""],
+      ["de.json"],
+      [" de"],
+      ["de "],
+      ["zh_CN"],
+      ["de-"],
+      ["-de"],
+      ["../de"],
       ["de", 3],
       ["de", null],
       [["de"]],

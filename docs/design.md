@@ -84,7 +84,11 @@ response timeout, so a server that never replies would hang the page.
 `register(id, { languages })` names the files the consumer ships, without `.json`. The
 loader then requests only the chain entries in that list. It compares names without
 regard to letter case, because i18next upper-cases the region (`zh-CN`) and a consumer
-may not. A missing file costs nothing on Coherent. On CEF the engine logs
+may not. The request keeps the chain's spelling, the same URL as without a list, so the
+file itself must carry the locale folder's spelling, as the file contract already
+requires. A name must be letters, then hyphen-separated letters or digits; anything else,
+such as `de.json` or `" de"`, could never match and is refused. A missing file costs
+nothing on Coherent. On CEF the engine logs
 `ERROR CEF webview resource not found: <url>` for each one, on every panel load (observed
 2026-11-27 for `zh.json` in `zh-CN`). The list is the only way to avoid that line, since
 the loader cannot ask whether a file exists without requesting it. A list that has
@@ -133,20 +137,20 @@ the rest another way. That is a consumer decision, not a framework change.
 
 ## Failure table
 
-| Situation                                                                  | Behaviour                                                                              |
-| -------------------------------------------------------------------------- | -------------------------------------------------------------------------------------- |
-| Bad `id` (not a non-empty string)                                          | `console.error`, `{ ok: false }`, nothing cached                                       |
-| `root` neither `undefined`, `null`, nor a `coui://` URL                    | `console.error` naming the id, `{ ok: false }`, nothing cached                         |
-| `languages` neither `undefined`, `null`, nor an array of non-empty strings | `console.error` naming the id, `{ ok: false }`, nothing cached                         |
-| `i18n` absent or missing `lng`/`exists`/`addResourceBundle`                | `console.error` naming the id, `{ ok: false }`, nothing cached                         |
-| `i18n.lng()` not a string                                                  | `ok: true`, nothing requested                                                          |
-| English locale (`en`, `en-US`)                                             | `ok: true`, nothing requested, `languages: []`                                         |
-| Chain entry not in `languages`                                             | Not requested; a stale list drops the language without an error                        |
-| File missing (404, status 0 with empty body, or thrown `send`)             | Skipped. Coherent logs nothing; CEF logs `ERROR CEF webview resource not found: <url>` |
-| File is not valid JSON                                                     | One `console.error` naming the URL; the rest of the chain still loads                  |
-| File is JSON but not an object                                             | One `console.error` naming the URL; language not listed                                |
-| Entry invalid                                                              | Counted in `invalid`, not added                                                        |
-| Same id registered twice on one page                                       | Cached result returned, no request                                                     |
+| Situation                                                               | Behaviour                                                                              |
+| ----------------------------------------------------------------------- | -------------------------------------------------------------------------------------- |
+| Bad `id` (not a non-empty string)                                       | `console.error`, `{ ok: false }`, nothing cached                                       |
+| `root` neither `undefined`, `null`, nor a `coui://` URL                 | `console.error` naming the id, `{ ok: false }`, nothing cached                         |
+| `languages` neither `undefined`, `null`, nor an array of language names | `console.error` naming the id, `{ ok: false }`, nothing cached                         |
+| `i18n` absent or missing `lng`/`exists`/`addResourceBundle`             | `console.error` naming the id, `{ ok: false }`, nothing cached                         |
+| `i18n.lng()` not a string                                               | `ok: true`, nothing requested                                                          |
+| English locale (`en`, `en-US`)                                          | `ok: true`, nothing requested, `languages: []`                                         |
+| Chain entry not in `languages`                                          | Not requested; a stale list drops the language without an error                        |
+| File missing (404, status 0 with empty body, or thrown `send`)          | Skipped. Coherent logs nothing; CEF logs `ERROR CEF webview resource not found: <url>` |
+| File is not valid JSON                                                  | One `console.error` naming the URL; the rest of the chain still loads                  |
+| File is JSON but not an object                                          | One `console.error` naming the URL; language not listed                                |
+| Entry invalid                                                           | Counted in `invalid`, not added                                                        |
+| Same id registered twice on one page                                    | Cached result returned, no request                                                     |
 
 `register` never throws. Each registration logs one line, as a single string, because
 PA's log keeps only the first console argument:

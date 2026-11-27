@@ -5,6 +5,7 @@
   var NAMESPACE = "translation";
   var SEPARATORS = /;;|::/;
   var COUI_ROOT = /^coui:\/\//i;
+  var LANGUAGE_NAME = /^[a-z]+(-[a-z0-9]+)*$/i;
   var registered = {};
 
   function engine() {
@@ -97,7 +98,7 @@
   }
 
   function isName(value) {
-    return _.isString(value) && value !== "";
+    return _.isString(value) && LANGUAGE_NAME.test(value);
   }
 
   function lowerCase(value) {
@@ -128,7 +129,7 @@
       if (shipped !== undefined && shipped !== null) {
         if (!_.isArray(shipped) || !_.every(shipped, isName)) {
           return fail(
-            "languages must be an array of non-empty strings; " +
+            'languages must be an array of language names such as "zh-CN"; ' +
               id +
               " not registered"
           );
