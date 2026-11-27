@@ -20,7 +20,8 @@ script of its own. The call:
 1. Reads `i18n.lng()` and builds the fallback chain the same way i18next does:
    `"de-AT"` gives `["de-AT", "de"]`, `"fr"` gives `["fr"]`.
 2. Reads `coui://ui/mods/<id>/translations/<lang>.json` with a synchronous XHR for each
-   entry in the chain, unless the chain ends in English.
+   entry in the chain, unless the chain ends in English. When the consumer passes a
+   `languages` list, it reads only the entries in that list.
 3. Collects `{ key: message }` from every file that parsed. The more specific file wins a
    shared key.
 4. Calls `i18n.addResourceBundle(lng, "translation", additions)`. This **extends** the
@@ -90,6 +91,20 @@ reads `coui://ui/ui/mods/<id>/`, and a relative path reads a different folder on
 page. A remote root is refused because the read is synchronous and the engine sets no
 response timeout, so a server that never replies would hang the page.
 
+`register(id, { languages })` names the files the consumer ships, without `.json`. The
+loader then requests only the chain entries in that list. It compares names without
+regard to letter case, because i18next upper-cases the region (`zh-CN`) and a consumer
+may not. The request keeps the chain's spelling, the same URL as without a list, so the
+file itself must carry the locale folder's spelling, as the file contract already
+requires. A name must be letters, then hyphen-separated letters or digits; anything else,
+such as `de.json` or `" de"`, could never match and is refused. A missing file costs
+nothing on Coherent. On CEF the engine logs
+`ERROR CEF webview resource not found: <url>` for each one, on every panel load (observed
+2026-11-27 for `zh.json` in `zh-CN`). The list is the only way to avoid that line, since
+the loader cannot ask whether a file exists without requesting it. A list that has
+fallen behind the files drops a language without an error. Without the option, the loader
+requests the whole chain.
+
 The shape is PA's own, `{ "English key": { "message": "…" } }`, so a consumer can give a
 file to the game's maintainers unchanged. The loader ignores extra properties such as
 `description`. The loader skips an entry and counts it `invalid` when its `message` is
@@ -136,18 +151,20 @@ the rest another way. That is a consumer decision, not a framework change.
 
 ## Failure table
 
-| Situation                                                      | Behaviour                                                             |
-| -------------------------------------------------------------- | --------------------------------------------------------------------- |
-| Bad `id` (not a non-empty string)                              | `console.error`, `{ ok: false }`, nothing cached                      |
-| `root` neither `undefined`, `null`, nor a `coui://` URL        | `console.error` naming the id, `{ ok: false }`, nothing cached        |
-| `i18n` absent or missing `lng`/`exists`/`addResourceBundle`    | `console.error` naming the id, `{ ok: false }`, nothing cached        |
-| `i18n.lng()` not a string                                      | `ok: true`, nothing requested                                         |
-| English locale (`en`, `en-US`)                                 | `ok: true`, nothing requested, `languages: []`                        |
-| File missing (404, status 0 with empty body, or thrown `send`) | Skipped silently                                                      |
-| File is not valid JSON                                         | One `console.error` naming the URL; the rest of the chain still loads |
-| File is JSON but not an object                                 | One `console.error` naming the URL; language not listed               |
-| Entry invalid                                                  | Counted in `invalid`, not added                                       |
-| Same id registered twice on one page                           | Cached result returned, no request                                    |
+| Situation                                                               | Behaviour                                                                              |
+| ----------------------------------------------------------------------- | -------------------------------------------------------------------------------------- |
+| Bad `id` (not a non-empty string)                                       | `console.error`, `{ ok: false }`, nothing cached                                       |
+| `root` neither `undefined`, `null`, nor a `coui://` URL                 | `console.error` naming the id, `{ ok: false }`, nothing cached                         |
+| `languages` neither `undefined`, `null`, nor an array of language names | `console.error` naming the id, `{ ok: false }`, nothing cached                         |
+| `i18n` absent or missing `lng`/`exists`/`addResourceBundle`             | `console.error` naming the id, `{ ok: false }`, nothing cached                         |
+| `i18n.lng()` not a string                                               | `ok: true`, nothing requested                                                          |
+| English locale (`en`, `en-US`)                                          | `ok: true`, nothing requested, `languages: []`                                         |
+| Chain entry not in `languages`                                          | Not requested; a stale list drops the language without an error                        |
+| File missing (404, status 0 with empty body, or thrown `send`)          | Skipped. Coherent logs nothing; CEF logs `ERROR CEF webview resource not found: <url>` |
+| File is not valid JSON                                                  | One `console.error` naming the URL; the rest of the chain still loads                  |
+| File is JSON but not an object                                          | One `console.error` naming the URL; language not listed                                |
+| Entry invalid                                                           | Counted in `invalid`, not added                                                        |
+| Same id registered twice on one page                                    | Cached result returned, no request                                                     |
 
 `register` never throws. Each registration logs one line, as a single string, because
 PA's log keeps only the first console argument:
@@ -177,7 +194,9 @@ mod enabled from `client_mods`:
    or a value the stock model caches at construction). That is the case a scene-list
    registration cannot reach.
 3. Use a regional locale (`de-AT`). `ModTranslations.languages()` returns the chain, and
-   the registration's `languages` lists only the files that exist (`["de"]`).
+   the registration's `languages` lists only the files that exist (`["de"]`). On CEF the
+   log has a `resource not found` line for `de-AT.json`, and none when the consumer passes
+   `languages: ["de"]`.
 4. Use English. `languages` is `[]`, there is no request, and the text is identical to
    before.
 5. Disable Mod Translations. The consumer works with English text and no error.
