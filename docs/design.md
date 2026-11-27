@@ -59,7 +59,16 @@ sub-panel. A `global_mod_list` script is never also in a scene list, and the ser
 merge is a union, so nothing loads it twice on one page. No double-load guard exists, and
 none is needed. `modinfo.json` sets `priority` 50, so the script runs before any consumer
 that keeps the default. Consumers register from the same list, in the same ascending
-order. So the "last registration wins" rule across mods follows `priority` directly.
+order. So the "last registration wins" rule across client mods follows `priority`
+directly.
+
+Server mods do not follow that order. In `community-mods-manager.js`, `activeServerMods`
+sorts the server mods by descending `priority`, `activeServerModScenes` collects their
+`global_mod_list` entries in that order, and `activeServerModsUImodList` appends the
+result after the client list with `_.union`. So a server mod's registration comes after
+every client mod's, whatever its `priority`. Of two server mods, the one with the lower
+`priority` registers later. A server mod's script also always runs after this one, so it
+needs no `priority` above 50.
 
 ### Why synchronous
 
@@ -99,8 +108,12 @@ can fix a shipped translation without waiting for a game patch. The cost is that
 mod entry can mask a later improvement in the game's own table. So a consumer should keep
 a list of its overrides and review it each release.
 
-Across mods, a later registration overwrites an earlier one for the same key. Both carry
-the same English text, so either is acceptable.
+Across mods, a later registration overwrites an earlier one for the same key. The order
+follows `priority`, with server mods after client mods (see "Boot order"). The same
+English key does not mean the same translation: two mods can translate a unit name
+differently. The text of the mod that registers later then shows everywhere the key
+appears, including in the other mod's text. The README tells authors how to set the
+order.
 
 ## Cost
 
