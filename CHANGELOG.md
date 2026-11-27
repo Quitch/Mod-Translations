@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## Unreleased
+
+- A `root` option passed to `register` that is not a `coui://` URL, such as a path, is now refused with a console error instead of reading the wrong folder
+
 ## v1.1.0 - 2026-10-17
 
 - A `root` option passed to `register` no longer needs a trailing slash

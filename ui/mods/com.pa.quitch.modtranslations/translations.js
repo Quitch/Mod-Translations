@@ -4,10 +4,7 @@
 (function (root) {
   var NAMESPACE = "translation";
   var SEPARATORS = /;;|::/;
-  var FOREIGN_SCHEME = /^(?!coui:)[a-z][a-z0-9+.-]*:/i;
-  // The URL parser drops tabs and newlines anywhere and control characters at
-  // the ends, so "ht\ttp://" requests http://.
-  var URL_IGNORED = /[^\x21-\uffff]/g;
+  var COUI_ROOT = /^coui:\/\//i;
   var registered = {};
 
   function engine() {
@@ -112,15 +109,12 @@
       if (_.has(registered, id)) {
         return registered[id];
       }
-      var customRoot =
-        options && _.isString(options.root) && _.trim(options.root);
-      if (
-        customRoot &&
-        FOREIGN_SCHEME.test(customRoot.replace(URL_IGNORED, ""))
-      ) {
-        return fail(
-          "root must be a coui:// URL or a path; " + id + " not registered"
-        );
+      var customRoot = options ? options.root : undefined;
+      if (customRoot !== undefined && customRoot !== null) {
+        customRoot = _.isString(customRoot) ? _.trim(customRoot) : "";
+        if (!COUI_ROOT.test(customRoot)) {
+          return fail("root must be a coui:// URL; " + id + " not registered");
+        }
       }
       var i18n = engine();
       if (!i18n) {
