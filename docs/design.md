@@ -60,7 +60,17 @@ sub-panel. A `global_mod_list` script is never also in a scene list, and the ser
 merge is a union, so nothing loads it twice on one page. No double-load guard exists, and
 none is needed. `modinfo.json` sets `priority` 50, so the script runs before any consumer
 that keeps the default. Consumers register from the same list, in the same ascending
-order. So the "last registration wins" rule across mods follows `priority` directly.
+order. So the "last registration wins" rule across client mods follows `priority`
+directly.
+
+Server mods come after all of that. In `community-mods-manager.js`,
+`activeServerModScenes` collects the server mods' `global_mod_list` entries, and
+`activeServerModsUImodList` appends them after the client list with `_.union`. So a server
+mod's registration comes after every client mod's, whatever its `priority`, and a server
+mod's script always runs after this one, so it needs no `priority` above 50. Between server
+mods the order is ascending `priority`. `activeServerMods` calls
+`_.sortByOrder(mods, 'priority', 'desc')`, but PA's lodash 3.9.3 reads any truthy order as
+ascending (`'desc'` arrived in 3.10), so the sort is ascending despite its argument.
 
 ### Why synchronous
 
@@ -116,8 +126,12 @@ can fix a shipped translation without waiting for a game patch. The cost is that
 mod entry can mask a later improvement in the game's own table. So a consumer should keep
 a list of its overrides and review it each release.
 
-Across mods, a later registration overwrites an earlier one for the same key. Both carry
-the same English text, so either is acceptable.
+Across mods, a later registration overwrites an earlier one for the same key. The order
+follows `priority`, with server mods after client mods (see "Boot order"). The same
+English key does not mean the same translation: two mods can translate a unit name
+differently. The text of the mod that registers later then shows everywhere the key
+appears, including in the other mod's text. The README tells authors how to set the
+order.
 
 ## Cost
 
