@@ -89,17 +89,16 @@ order, which is how Community Mods sorts client mods: ascending `priority`. A mo
 higher `priority` number registers later and takes the key. The result's `replaced` count
 includes keys taken from other mods as well as from the game's tables.
 
-Server mods register in a different order. Community Mods appends the server mods' global
-scripts after every client mod's, and sorts the server mods by descending `priority`. So a
-server mod registers after every client mod, whatever its `priority`, and takes every key
-it shares with one. Of two server mods, the one with the lower `priority` number registers
-later and takes the key.
+Server mods register after client mods. Community Mods appends the server mods' global
+scripts after every client mod's. So a server mod registers after every client mod,
+whatever its `priority`, and takes every key it shares with one. Between two server mods,
+the order is ascending `priority`, as for client mods.
 
 To make sure the game shows your text:
 
-- Give your mod a higher `priority` than the client mod you need to beat, or a lower one
-  than the server mod you need to beat. Community Mods orders two mods on the same
-  number, not you, so pick a distinct value. A client mod cannot beat a server mod.
+- Give your mod a higher `priority` than the mod you need to beat. Community Mods orders
+  two mods on the same number, not you, so pick a distinct value. A client mod cannot
+  beat a server mod, whatever its `priority`.
 - Only ship keys you mean to override. A shared key is usually a shared English string,
   such as a unit name. If both mods translate it the same way, the order does not matter.
   If they differ, the reading of the mod that registers later wins everywhere the key

@@ -62,13 +62,14 @@ that keeps the default. Consumers register from the same list, in the same ascen
 order. So the "last registration wins" rule across client mods follows `priority`
 directly.
 
-Server mods do not follow that order. In `community-mods-manager.js`, `activeServerMods`
-sorts the server mods by descending `priority`, `activeServerModScenes` collects their
-`global_mod_list` entries in that order, and `activeServerModsUImodList` appends the
-result after the client list with `_.union`. So a server mod's registration comes after
-every client mod's, whatever its `priority`. Of two server mods, the one with the lower
-`priority` registers later. A server mod's script also always runs after this one, so it
-needs no `priority` above 50.
+Server mods come after all of that. In `community-mods-manager.js`,
+`activeServerModScenes` collects the server mods' `global_mod_list` entries, and
+`activeServerModsUImodList` appends them after the client list with `_.union`. So a server
+mod's registration comes after every client mod's, whatever its `priority`, and a server
+mod's script always runs after this one, so it needs no `priority` above 50. Between server
+mods the order is ascending `priority`. `activeServerMods` calls
+`_.sortByOrder(mods, 'priority', 'desc')`, but PA's lodash 3.9.3 reads any truthy order as
+ascending (`'desc'` arrived in 3.10), so the sort is ascending despite its argument.
 
 ### Why synchronous
 
