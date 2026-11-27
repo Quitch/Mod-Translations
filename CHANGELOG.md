@@ -2,7 +2,7 @@
 
 ## Unreleased
 
-- A `root` option passed to `register` that is not a `coui://` URL, such as a path, is now refused with a console error instead of reading the wrong folder
+- A `root` option passed to `register` must now be a `coui://` URL. Any other value, such as a path or a number, is refused with a console error
 
 ## v1.1.0 - 2026-10-17
 
