@@ -5,6 +5,8 @@
   var NAMESPACE = "translation";
   var SEPARATORS = /;;|::/;
   var COUI_ROOT = /^coui:\/\//i;
+  var LANGUAGE_NAME = /^[a-z]+(-[a-z0-9]+)*$/i;
+  var REFUSED = {};
   var registered = {};
 
   function engine() {
@@ -96,6 +98,34 @@
     return true;
   }
 
+  function isName(value) {
+    return _.isString(value) && LANGUAGE_NAME.test(value);
+  }
+
+  function lowerCase(value) {
+    return value.toLowerCase();
+  }
+
+  function rootOption(options) {
+    var value = options ? options.root : undefined;
+    if (value === undefined || value === null) {
+      return undefined;
+    }
+    value = _.isString(value) ? _.trim(value) : "";
+    return COUI_ROOT.test(value) ? value : REFUSED;
+  }
+
+  function languagesOption(options) {
+    var value = options ? options.languages : undefined;
+    if (value === undefined || value === null) {
+      return undefined;
+    }
+    if (!_.isArray(value) || !_.every(value, isName)) {
+      return REFUSED;
+    }
+    return _.map(value, lowerCase);
+  }
+
   function fail(message) {
     console.error("[ModTranslations] " + message);
     return { ok: false };
@@ -109,12 +139,17 @@
       if (_.has(registered, id)) {
         return registered[id];
       }
-      var customRoot = options ? options.root : undefined;
-      if (customRoot !== undefined && customRoot !== null) {
-        customRoot = _.isString(customRoot) ? _.trim(customRoot) : "";
-        if (!COUI_ROOT.test(customRoot)) {
-          return fail("root must be a coui:// URL; " + id + " not registered");
-        }
+      var customRoot = rootOption(options);
+      if (customRoot === REFUSED) {
+        return fail("root must be a coui:// URL; " + id + " not registered");
+      }
+      var shipped = languagesOption(options);
+      if (shipped === REFUSED) {
+        return fail(
+          'languages must be an array of language names such as "zh-CN"; ' +
+            id +
+            " not registered"
+        );
       }
       var i18n = engine();
       if (!i18n) {
@@ -136,6 +171,9 @@
 
       if (!isEnglish(languages)) {
         _.forEach(languages, function (lang) {
+          if (shipped && !_.includes(shipped, lang.toLowerCase())) {
+            return;
+          }
           var url = fileUrl(rootUrl, lang);
           var file = fetchJson(url);
           if (file.missing) {

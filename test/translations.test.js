@@ -81,6 +81,108 @@ describe("register", () => {
     }
   });
 
+  it("requests only the chain entries that options.languages lists, in any letter case", () => {
+    const cases = [
+      ["zh-CN", ["zh-cn", "de"], ["zh-CN"]],
+      ["zh-CN", ["ZH"], ["zh"]],
+      ["de-AT", ["DE", "fr"], ["de"]],
+      ["de-AT", ["de", "de-at"], ["de-AT", "de"]],
+    ];
+    for (const [lng, languages, requested] of cases) {
+      const routes = {};
+      for (const lang of requested) {
+        routes[ROOT + lang + ".json"] = json(entries({ [lang]: lang }));
+      }
+      const fixture = page({ lng: lng, routes: routes });
+
+      const result = fixture.api.register(ID, { languages: languages });
+
+      assert.deepEqual(
+        fixture.requests,
+        requested.map((lang) => ({ url: ROOT + lang + ".json", async: false }))
+      );
+      assert.deepEqual(result.languages, requested);
+      assert.equal(result.added, requested.length);
+      assert.equal(result.ok, true);
+    }
+  });
+
+  it("requests nothing when options.languages lists no entry of the chain", () => {
+    for (const languages of [[], ["de"], ["fr-CA"]]) {
+      const fixture = page({
+        lng: "fr",
+        routes: { [ROOT + "fr.json"]: json(entries({ Mods: "Mods" })) },
+      });
+
+      const result = fixture.api.register(ID, { languages: languages });
+
+      assert.deepEqual(fixture.requests, []);
+      assert.deepEqual(fixture.i18n.bundles, []);
+      assert.deepEqual(result.languages, []);
+      assert.equal(result.ok, true);
+    }
+  });
+
+  it("loads nothing for English, whatever options.languages lists", () => {
+    const fixture = page({
+      lng: "en-US",
+      routes: { [ROOT + "en-US.json"]: json(entries({ Mods: "Mods" })) },
+    });
+
+    const result = fixture.api.register(ID, { languages: ["en-US", "en"] });
+
+    assert.deepEqual(fixture.requests, []);
+    assert.deepEqual(result.languages, []);
+    assert.equal(result.ok, true);
+  });
+
+  it("requests the whole chain when options.languages is null or absent", () => {
+    for (const options of [{ languages: undefined }, { languages: null }]) {
+      const fixture = page({ lng: "de-AT" });
+
+      fixture.api.register(ID, options);
+
+      assert.deepEqual(fixture.requests, [
+        { url: ROOT + "de-AT.json", async: false },
+        { url: ROOT + "de.json", async: false },
+      ]);
+    }
+  });
+
+  it("refuses a languages option that is not an array of language names", () => {
+    for (const languages of [
+      "de",
+      42,
+      true,
+      {},
+      { 0: "de", length: 1 },
+      [""],
+      ["de.json"],
+      [" de"],
+      ["de "],
+      ["zh_CN"],
+      ["de-"],
+      ["-de"],
+      ["../de"],
+      ["de", 3],
+      ["de", null],
+      [["de"]],
+      // eslint-disable-next-line no-sparse-arrays
+      [, "de"],
+    ]) {
+      const fixture = page({ lng: "de" });
+
+      const result = fixture.api.register(ID, { languages: languages });
+
+      assert.deepEqual(result, { ok: false });
+      assert.equal(fixture.console.error.length, 1);
+      assert.match(fixture.console.error[0], /languages/);
+      assert.ok(fixture.console.error[0].includes(ID));
+      assert.deepEqual(fixture.api.registered(), {});
+      assert.deepEqual(fixture.requests, []);
+    }
+  });
+
   it("adds every valid key as a flat string in the current locale, replacing the game's own", () => {
     const fixture = page({
       lng: "de",
