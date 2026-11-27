@@ -276,7 +276,7 @@ describe("register", () => {
     assert.deepEqual(fixture.requests, []);
   });
 
-  it("refuses a root with another scheme, without caching or requesting", () => {
+  it("refuses a root that is not a coui:// URL, without caching or requesting", () => {
     for (const root of [
       "http://example.com/translations/",
       "https://example.com/translations/",
@@ -287,6 +287,20 @@ describe("register", () => {
       "ht\ttp://example.com/translations/",
       "h\nttps://example.com/translations/",
       "\x01http://example.com/translations/",
+      "/ui/mods/elsewhere/",
+      "//ui/mods/elsewhere/",
+      "/mods/elsewhere/",
+      "ui/mods/elsewhere",
+      "coui:ui/mods/elsewhere/",
+      "co ui://ui/mods/elsewhere/",
+      "co\tui://ui/mods/elsewhere/",
+      "",
+      "   ",
+      42,
+      0,
+      false,
+      ["coui://ui/mods/elsewhere/"],
+      { href: "coui://ui/mods/elsewhere/" },
     ]) {
       const fixture = page({ lng: "fr" });
 
@@ -314,13 +328,28 @@ describe("register", () => {
     assert.equal(result.added, 1);
   });
 
-  it("accepts a coui:// root in any letter case, a path, and surrounding spaces", () => {
+  it("reads the default folder when options or its root is null or absent", () => {
+    for (const options of [{ root: undefined }, { root: null }, {}, null]) {
+      const fixture = page({
+        lng: "fr",
+        routes: { [ROOT + "fr.json"]: json(entries({ Mods: "Mods" })) },
+      });
+
+      const result = fixture.api.register(ID, options);
+
+      assert.deepEqual(fixture.requests, [
+        { url: ROOT + "fr.json", async: false },
+      ]);
+      assert.equal(result.ok, true);
+      assert.equal(result.added, 1);
+    }
+  });
+
+  it("accepts a coui:// root in any letter case and with surrounding whitespace", () => {
     const cases = [
       ["COUI://ui/mods/elsewhere", "COUI://ui/mods/elsewhere/fr.json"],
       [" coui://ui/mods/elsewhere/ ", "coui://ui/mods/elsewhere/fr.json"],
-      ["/ui/mods/elsewhere/", "/ui/mods/elsewhere/fr.json"],
-      ["//ui/mods/elsewhere/", "//ui/mods/elsewhere/fr.json"],
-      ["ui/mods/elsewhere", "ui/mods/elsewhere/fr.json"],
+      ["\tCoui://ui/mods/elsewhere\n", "Coui://ui/mods/elsewhere/fr.json"],
     ];
     for (const [root, url] of cases) {
       const fixture = page({
