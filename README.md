@@ -61,9 +61,26 @@ Mod Translations does nothing on its own.
    language (`de-AT`, then `de`). It merges them into the game's translation store and
    returns `{ id, language, languages, added, replaced, invalid, ok }`. A second call on
    the same page returns the cached result. Pass `{ root: "coui://..." }` as a second
-   argument if your files live elsewhere. A root with any other scheme is refused. The
+   argument if your files live elsewhere. Any other root, a path included, is refused. The
    guard keeps your mod working when Mod Translations is not installed. Your text is then
    English.
+
+   List the files you ship, without `.json`, in a `languages` option:
+
+   ```js
+   window.ModTranslations.register("<your mod id>", {
+     languages: ["de", "fr", "zh-CN"],
+   });
+   ```
+
+   `register` then requests only the files in the list. Without it, `register` requests
+   the locale file and the base-language file whether or not you ship them. On the
+   game's default UI (CEF), each missing file logs an error line, on every page. A name
+   in the list matches in any letter case, but the request uses the game's spelling, so
+   name the files themselves as in step 1 (`zh-CN.json`). If one entry is not a language
+   name, such as `"de.json"`, `register` refuses the whole call with a console error and
+   loads no file. Keep the list up to date: a language that is not in the list does not
+   load, and nothing reports it. Older versions of Mod Translations ignore the option.
 
 3. The loader applies these rules:
 
@@ -77,25 +94,32 @@ Mod Translations does nothing on its own.
    it with your mod. Give your mod a `priority` above 50. Community Mods loads mods in
    ascending `priority` order (the default is 100), and Mod Translations uses 50. With a
    lower or equal value, your global script can run before `window.ModTranslations`
-   exists, and your text stays in English.
+   exists, and your text stays in English. A server mod's global script always runs after
+   Mod Translations, so this does not apply to a server mod.
 
 ### When two mods translate the same key
 
 The last mod to register a key wins. Each `register` call writes its entries over whatever
 is already in the game's translation store. So a key that two mods both ship ends up with
 the text of the mod that registered later. The register order is the `global_mod_list`
-order, which is how Community Mods sorts mods: ascending `priority`. A mod with a higher
-`priority` number registers later and takes the key. The result's `replaced` count includes
-keys taken from other mods as well as from the game's tables.
+order, which is how Community Mods sorts client mods: ascending `priority`. A mod with a
+higher `priority` number registers later and takes the key. The result's `replaced` count
+includes keys taken from other mods as well as from the game's tables.
+
+Server mods register after client mods. Community Mods appends the server mods' global
+scripts after every client mod's. So a server mod registers after every client mod,
+whatever its `priority`, and takes every key it shares with one. Between two server mods,
+the order is ascending `priority`, as for client mods.
 
 To make sure the game shows your text:
 
 - Give your mod a higher `priority` than the mod you need to beat. Community Mods orders
-  two mods on the same number, not you, so pick a distinct value.
+  two mods on the same number, not you, so pick a distinct value. A client mod cannot
+  beat a server mod, whatever its `priority`.
 - Only ship keys you mean to override. A shared key is usually a shared English string,
   such as a unit name. If both mods translate it the same way, the order does not matter.
-  If they differ, the higher-priority mod's reading wins everywhere the key appears,
-  including in the other mod's text.
+  If they differ, the reading of the mod that registers later wins everywhere the key
+  appears, including in the other mod's text.
 
 See [docs/design.md](docs/design.md) for the mechanism and what it cannot do.
 
